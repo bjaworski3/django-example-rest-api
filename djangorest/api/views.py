@@ -14,6 +14,11 @@ class CreateView(generics.ListCreateAPIView):
         """Save the post data when creating a new bucketlist."""
         serializer.save(owner=self.request.user)  # Add owner=self.request.use
 
+    def get_queryset(self):
+        """Only return bucketlist items owned by the currently authenticated user."""
+        user = self.request.user
+        return Bucketlist.objects.filter(owner=user)
+
 
 class DetailsView(generics.RetrieveUpdateDestroyAPIView):
     """This class handles the http GET, PUT and DELETE requests."""
