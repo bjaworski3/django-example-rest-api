@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 services:
   web:
@@ -12,27 +12,72 @@ services:
     ports:
       - "8000"
     depends_on:
-      - postgres
-    links:
-      - postgres:postgres
+      - 'postgres'
+    networks:
+      - 'stack'
 
   nginx:
     restart: always
-    build: ./nginx
+    build: ./nginx-filebeat
     ports:
       - "80:80"
     volumes:
       - static-files:/usr/src/app/static
-    links:
-      - web:web
+    depends_on:
+      - web
+    networks:
+      - 'stack'
 
   postgres:
     restart: always
     image: postgres
     ports:
       - "5423:5423"
+    networks:
+      - 'stack'
 
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
+    environment:
+      - 'http.host=0.0.0.0'
+      - 'transport.host=127.0.0.1'
+    ports:
+      - "9200:9200"
+    networks:
+      - 'stack'
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:5.5.0
+    ports:
+      - "5601:5601"
+    volumes:
+      - ./kibana/:/usr/share/kibana/config
+    networks:
+      - 'stack'
+    depends_on:
+      - 'elasticsearch'
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:5.5.0
+    command: logstash -f /etc/logstash/conf.d
+    volumes:
+      - ./logstash/conf.d:/etc/logstash/conf.d
+      - ./logstash/patterns/nginx:/opt/logstash/patterns_extra
+    environment:
+      - LOGSTASH_HOST=logstash
+    ports:
+      - "5000:5000"
+    networks:
+      - 'stack'
+    depends_on:
+      - 'elasticsearch'
 
 volumes:
   static-files:
+  nginx-access:
+
+networks:
+  stack:
+    driver: bridge
 

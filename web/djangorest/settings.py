@@ -96,6 +96,40 @@ DATABASES = {
     }
 }
 
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+            'logstash': {
+                'level': 'ERROR',
+                'class': 'logstash.TCPLogstashHandler',
+                'host': 'logstash',
+                'port': 5043,  # Default value: 5959
+                'version': 1,
+                # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
+                'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
+                'fqdn': False,  # Fully qualified domain name. Default value: false.
+                'tags': ['django.request'],  # list of tags. Default: None.
+            },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['logstash'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
